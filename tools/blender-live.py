@@ -76,6 +76,12 @@ def main() -> int:
                 print("需要一段 Python 代码")
                 return 2
             result = call("execute_code", {"code": argv[1]})
+        elif action == "exec-file":
+            if len(argv) < 2:
+                print("需要一个脚本路径")
+                return 2
+            with open(argv[1], encoding="utf-8") as handle:
+                result = call("execute_code", {"code": handle.read()}, timeout=600.0)
         elif action == "shot":
             result = call("get_viewport_screenshot", {"filepath": argv[1] if len(argv) > 1 else None})
         else:

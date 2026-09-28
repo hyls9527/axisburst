@@ -70,6 +70,40 @@ const stages = [
     }],
   },
   {
+    name: 'sishan-organic',
+    what: '四季山河 · 8 个有机件（活动 Blender 生成）',
+    commands: () => {
+      const live = py('blender/live_scripts/sishan_organic.py');
+      if (!existsSync(live)) throw new Error('缺少 blender/live_scripts/sishan_organic.py');
+      return [
+        // 有机件要雕刻/活动 Blender：先确保 socket 通道，再投递脚本
+        { bin: 'powershell', args: ['-NoProfile', '-ExecutionPolicy', 'Bypass',
+          '-File', py('tools/blender-ensure.ps1')], label: 'ensure channel' },
+        { bin: 'python', args: [py('tools/blender-live.py'), 'exec-file', live],
+          label: 'sishan_organic.py' },
+      ];
+    },
+  },
+  {
+    name: 'sishan-assembly',
+    what: '四季山河 · 总装分层 SVG + 三视图×三风格',
+    commands: () => [{
+      bin: BLENDER,
+      args: ['--background', '--factory-startup', '--python', py('blender/build_sishan_assembly.py'),
+        '--', '--out', py('blender/out/sishan')],
+      label: 'build_sishan_assembly.py',
+    }],
+  },
+  {
+    name: 'sishan-assets',
+    what: '四季山河 · 前端资产（分层 SVG + 位移量）',
+    commands: () => [{
+      bin: process.execPath,
+      args: [py('tools/normalize-svg.mjs')],
+      label: 'normalize-svg (sishan)',
+    }],
+  },
+  {
     name: 'assembly',
     what: '总装级：部件组成整体 → 总装分层线稿',
     commands: () => [{
