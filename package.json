@@ -1,0 +1,9 @@
+{
+  "name": "mech-explode",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "dependencies": {
+    "animejs": "^4.2.2"
+  }
+}
