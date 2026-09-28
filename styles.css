@@ -115,6 +115,15 @@ body > p[data-aigc-mark] {
   color: var(--muted);
 }
 
+/* 四季色标 */
+.keywords .kw-c {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1px solid rgba(21, 22, 26, 0.18);
+  flex: 0 0 auto;
+}
+
 /* ---------------------------------------------------------------- 左下参数表 */
 
 .readout {

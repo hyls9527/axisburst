@@ -20,13 +20,20 @@ const [meta, svgText] = await Promise.all([
 ]);
 
 const parts = [...meta.parts].sort((a, b) => a.order - b.order);
+
+// 四季语义色（SPEC-四季山河.md）：春粉 / 夏绿青 / 秋红橙 / 冬白墨
+const SEASON_COLOR = {
+  'SS-01': '#3a2a22', 'SS-02': '#4d8f7a', 'SS-03': '#7fb4c4', 'SS-04': '#8fc4d4',
+  'SS-05': '#a8623a', 'SS-06': '#5f8f4e', 'SS-07': '#e08aa8', 'SS-08': '#8d8578',
+  'SS-09': '#c0502a', 'SS-10': '#8a5a3c', 'SS-11': '#2f4a3c', 'SS-12': '#eef2f6',
+};
 const drawing = document.getElementById('drawing');
 drawing.innerHTML = svgText;
 const svg = drawing.querySelector('svg');
 
 const kwList = document.getElementById('keywords');
 kwList.innerHTML = parts
-  .map((p) => `<li class="kw" data-part="${p.id}"><span class="kw-i">${String(p.order + 1).padStart(2, '0')}</span><span>${p.label}</span></li>`)
+  .map((p) => `<li class="kw" data-part="${p.id}"><span class="kw-i">${String(p.order + 1).padStart(2, '0')}</span><span class="kw-c" style="background:${SEASON_COLOR[p.id] ?? '#999'}"></span><span>${p.label}</span></li>`)
   .join('');
 
 const el = (id) => svg.querySelector(`[data-part="${id}"]`);

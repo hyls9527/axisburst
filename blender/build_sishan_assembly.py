@@ -41,6 +41,27 @@ CAD = os.path.abspath(os.path.join(HERE, "..", "cad", "out"))
 # 个别件的缩放修正：雪山不能和山体一样大，否则叠起来成两团
 PART_SCALE = {"SS-12": 0.52, "SS-02": 0.80, "SS-04": 0.85}
 
+# 四季语义配色（SPEC-四季山河.md）：春粉 / 夏绿青 / 秋红橙 / 冬白墨
+SEASON = {
+    "SS-01": ("底座", "#3a2a22"),
+    "SS-02": ("夏", "#4d8f7a"),
+    "SS-03": ("夏", "#7fb4c4"),
+    "SS-04": ("夏", "#8fc4d4"),
+    "SS-05": ("秋", "#a8623a"),
+    "SS-06": ("夏", "#5f8f4e"),
+    "SS-07": ("春", "#e08aa8"),
+    "SS-08": ("", "#8d8578"),
+    "SS-09": ("秋", "#c0502a"),
+    "SS-10": ("秋", "#8a5a3c"),
+    "SS-11": ("冬", "#2f4a3c"),
+    "SS-12": ("冬", "#eef2f6"),
+}
+
+
+def hex_to_rgba(value):
+    v = value.lstrip("#")
+    return (int(v[0:2], 16) / 255.0, int(v[2:4], 16) / 255.0, int(v[4:6], 16) / 255.0, 1.0)
+
 
 def obj_path(name):
     for base in (LIVE, CAD):
@@ -244,6 +265,15 @@ def main():
     scene = bpy.context.scene
     scene.render.resolution_x = 1100
     scene.render.resolution_y = 850
+    # 出图用光照压下来，否则材质本色被曝成一片白
+    _sun = bpy.data.objects.get("Sun")
+    if _sun:
+        _sun.data.energy = 1.1
+    if scene.world and scene.world.use_nodes:
+        bg = scene.world.node_tree.nodes.get("Background")
+        if bg:
+            bg.inputs[0].default_value = (0.42, 0.42, 0.43, 1.0)
+            bg.inputs[1].default_value = 0.55
     for m in all_meshes:
         d = m.modifiers.new("viewdec", "DECIMATE")
         d.ratio = 0.06
@@ -280,6 +310,17 @@ def main():
                 for mod in existing:
                     m.modifiers.remove(mod)
 
+    # 四季色稿用材质：每件一个
+    season_mats = {}
+    for pn, (season, hexcol) in SEASON.items():
+        mat = bpy.data.materials.new(f"Season_{pn}")
+        mat.use_nodes = True
+        node = mat.node_tree.nodes.get("Principled BSDF")
+        if node:
+            node.inputs["Base Color"].default_value = hex_to_rgba(hexcol)
+            node.inputs["Roughness"].default_value = 0.75
+        season_mats[pn] = mat
+
     for view_name, direction in views.items():
         cam = bpy.data.objects.get("VIEWCAM")
         if cam is None:
@@ -303,6 +344,14 @@ def main():
         bpy.context.scene.render.filepath = os.path.join(VIEW, f"{view_name}_wire.png")
         bpy.ops.render.render(write_still=True)
         wireframe(False)
+
+        # 四季色稿
+        for pn, mesh in placed.items():
+            mesh.data.materials.clear()
+            mesh.data.materials.append(season_mats.get(pn, clay))
+        bpy.context.scene.render.filepath = os.path.join(VIEW, f"{view_name}_season.png")
+        bpy.ops.render.render(write_still=True)
+
         set_material(bpy.data.materials.get("Paper"))
         gp_visible(True)
 
