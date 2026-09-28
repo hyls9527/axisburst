@@ -2,3 +2,11 @@ node_modules/
 
 # Blender 管线产物（由 blender/build_and_export.py 重新生成）
 blender/out/
+
+# CAD 管线产物（由 cad/*.py 重新生成）
+cad/out/
+
+# 各 agent 的技能入口是 junction，指向 .agents/skills 这一份真源。
+# 跟着提交会把同一批技能存三遍。
+.claude/
+.workbuddy/
