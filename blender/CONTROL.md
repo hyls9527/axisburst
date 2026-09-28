@@ -85,6 +85,19 @@ StackExchange 上被顶得最高的相关条目，与我们的痛点逐条对应
 
 ## 五、待验证（不要当结论用）
 
+### 活动 Blender 通路（live socket）的硬约束
+
+经 `tools/blender-live.py` 在**活动 Blender**里跑脚本时：
+
+1. **绝不能用 `bpy.ops.wm.read_factory_settings()`**。
+   它会重载整个 Blender 状态，把 MCP 插件的 socket 服务器一起干掉——
+   脚本第一行就把自己的控制通道切断了。实测：Blender 进程仍在，但 9876 立刻拒连，
+   脚本无输出、无产物。要清场就逐个 `bpy.data.objects.remove()`。
+2. 通道断了以后**自己接不回来**：插件需要界面上点一次 Connect，
+   而那一步只能由人在 Blender 里完成。
+
+这条正好解释了为什么它值得单独记：失败方式是"静默失联"，不是报错。
+
 - `CAD_Sketcher` 是否兼容 Blender 5.2（仓库 README 以 4.x 为主），需实测。
 - `freestyle-svg-exporter` 是老插件，5.x 的 API 改动可能导致不可用；若要，
   优先用 Blender 扩展平台上的版本。
