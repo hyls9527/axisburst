@@ -57,16 +57,25 @@ def make_camera() -> bpy.types.Object:
     return cam
 
 
-def fit_camera(cam: bpy.types.Object, corners: list[Vector], *, pad: float = 1.14) -> None:
+def fit_camera(
+    cam: bpy.types.Object,
+    corners: list[Vector],
+    *,
+    pad: float = 1.14,
+    view_dir: Vector | None = None,
+    up_hint: str = "Y",
+) -> None:
     """把正交相机对准这一组世界坐标点，自动定尺寸并居中。
 
     两遍：先按包围盒给一个尺度，量出投影范围后再精确缩放 + 平移居中。
     """
     scene = bpy.context.scene
 
+    direction = Vector(view_dir).normalized() if view_dir else VIEW_DIR
+
     def point_at(center: Vector) -> None:
-        cam.location = center + VIEW_DIR * 40.0
-        cam.rotation_euler = (-VIEW_DIR).to_track_quat("-Z", "Y").to_euler()
+        cam.location = center + direction * 40.0
+        cam.rotation_euler = (-direction).to_track_quat("-Z", up_hint).to_euler()
 
     center = sum(corners, Vector()) / len(corners)
     span = max((c - center).length for c in corners)

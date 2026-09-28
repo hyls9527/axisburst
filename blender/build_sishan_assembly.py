@@ -229,6 +229,69 @@ def main():
         print("[sishan] 缺件：", ", ".join(missing))
     print(f"[sishan] 写出 {svg_path}")
 
+    # ⑥ 三视图 × 三风格（线稿 / 灰模 / 线框）—— 验收口径要求由管线自动产出
+    views = {
+        "front": Vector((0.0, -1.0, 0.0)),
+        "side": Vector((1.0, 0.0, 0.0)),
+        "top": Vector((0.0, 0.0, 1.0)),
+    }
+    VIEW = os.path.join(out_dir, "views")
+    os.makedirs(VIEW, exist_ok=True)
+    corners = rk.bbox_corners(lo, hi)
+
+    clay = bpy.data.materials.new("Clay")
+    clay.use_nodes = True
+    cb = clay.node_tree.nodes.get("Principled BSDF")
+    if cb:
+        cb.inputs["Base Color"].default_value = (0.62, 0.62, 0.62, 1.0)
+        cb.inputs["Roughness"].default_value = 0.9
+
+    def gp_visible(state):
+        for gp in gp_objects:
+            gp.hide_render = not state
+
+    def set_material(mat):
+        for m in all_meshes:
+            m.data.materials.clear()
+            m.data.materials.append(mat)
+
+    def wireframe(state):
+        for m in all_meshes:
+            existing = [mod for mod in m.modifiers if mod.type == "WIREFRAME"]
+            if state and not existing:
+                w = m.modifiers.new("wire", "WIREFRAME")
+                w.thickness = 0.004
+                w.use_replace = True
+            elif not state:
+                for mod in existing:
+                    m.modifiers.remove(mod)
+
+    for view_name, direction in views.items():
+        cam = bpy.data.objects.get("VIEWCAM")
+        if cam is None:
+            cam = rk.make_camera()
+            cam.name = "VIEWCAM"
+        bpy.context.scene.camera = cam
+        up = "Y" if view_name != "top" else "X"
+        rk.fit_camera(cam, corners, pad=1.08, view_dir=direction, up_hint=up)
+        bpy.context.scene.render.filepath = os.path.join(VIEW, f"{view_name}_line.png")
+        gp_visible(True)
+        bpy.ops.render.render(write_still=True)
+
+        gp_visible(False)
+        set_material(clay)
+        bpy.context.scene.render.filepath = os.path.join(VIEW, f"{view_name}_clay.png")
+        bpy.ops.render.render(write_still=True)
+
+        wireframe(True)
+        bpy.context.scene.render.filepath = os.path.join(VIEW, f"{view_name}_wire.png")
+        bpy.ops.render.render(write_still=True)
+        wireframe(False)
+        set_material(bpy.data.materials.get("Paper"))
+        gp_visible(True)
+
+    print(f"[sishan] 三视图 ×3 风格 → {VIEW}")
+
 
 if __name__ == "__main__":
     main()
