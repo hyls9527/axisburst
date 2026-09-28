@@ -107,6 +107,7 @@ def add_line_art(
     *,
     radius: float = 0.0035,
     crease_deg: float = 132.0,
+    intersection: bool = True,
 ) -> bpy.types.Object:
     """给一个集合建 Line Art → Grease Pencil 图层。
 
@@ -127,7 +128,8 @@ def add_line_art(
     mod.use_contour = True
     mod.use_crease = True
     mod.use_edge_mark = True
-    mod.use_intersection = True
+    # 有机件减面后会产生大量自交边，画出来就是一片碎点，默认关掉
+    mod.use_intersection = intersection
     mod.use_loose = False
     mod.use_material = False
     mod.crease_threshold = math.radians(crease_deg)

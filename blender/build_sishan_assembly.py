@@ -37,6 +37,9 @@ LAYOUT = [
 LIVE = os.path.join(HERE, "out", "live")
 CAD = os.path.abspath(os.path.join(HERE, "..", "cad", "out"))
 
+# 个别件的缩放修正：雪山不能和山体一样大，否则叠起来成两团
+PART_SCALE = {"SS-12": 0.52, "SS-02": 0.80, "SS-04": 0.85}
+
 
 def obj_path(name):
     for base in (LIVE, CAD):
@@ -86,6 +89,9 @@ def main():
         obj = bpy.context.object
         obj.name = pn
         obj.location = loc
+        s = PART_SCALE.get(pn)
+        if s:
+            obj.scale = (s, s, s)
         col = kit.new_collection("P_" + pn)
         kit.move_to(obj, col)
         # 把变换烘进网格，后面射线求交才在同一个坐标系里
@@ -133,13 +139,14 @@ def main():
             continue
         x, y, z_manual = loc
         z = surface_z(x, y, z_manual)
-        embed = 0.05
+        # 雪山要跟山体连成一体，不能浮在顶上（embed 为负=往下埋）
+        embed = -0.62 if pn == "SS-12" else -0.10 if crease >= 160 and pn not in ("SS-02", "SS-04", "SS-03") else 0.05
         if z is None:
             z = z_manual
             note = "手工"
         else:
             z = z + embed
-            note = f"贴山面 {z - embed:.2f}"
+            note = f"贴山面 {z - embed:.2f} embed {embed:+.2f}"
         obj = import_part(pn, objname, (x, y, z))
         if obj is None:
             missing.append(objname)
@@ -151,6 +158,33 @@ def main():
     all_meshes = list(placed.values())
     if not all_meshes:
         raise SystemExit("总装没有任何几何")
+
+    # ④ 压回规格：整组等比缩放到 560 × 320 × 360 mm 以内
+    SPE = (5.60, 3.20, 3.60)
+    lo0, hi0 = rk.scene_bounds(all_meshes)
+    size0 = (hi0.x - lo0.x, hi0.y - lo0.y, hi0.z - lo0.z)
+    fit = min(SPE[i] / size0[i] for i in range(3) if size0[i] > 1e-6)
+    if abs(fit - 1.0) > 1e-4:
+        for obj in all_meshes:
+            obj.scale = (fit, fit, fit)      # 几何已烘到世界坐标，原点在 (0,0,0)
+        bpy.context.view_layer.update()
+        print(f"[sishan] 等比压缩 x{fit:.4f}（原 {[round(s*100) for s in size0]} mm）")
+
+    # ⑤ 有机件出线稿前先减面+平滑，压住笔画数（不然密成线框）
+    for pn, label, objname, loc, crease in LAYOUT:
+        if pn not in placed or crease < 160:
+            continue
+        obj = placed[pn]
+        bpy.ops.object.select_all(action="DESELECT")
+        obj.select_set(True)
+        bpy.context.view_layer.objects.active = obj
+        d = obj.modifiers.new("d", "DECIMATE")
+        d.ratio = 0.16
+        s = obj.modifiers.new("s", "SMOOTH")
+        s.factor = 0.9
+        s.iterations = 8
+        bpy.ops.object.modifier_apply(modifier=d.name)
+        bpy.ops.object.modifier_apply(modifier=s.name)
 
     lo, hi = rk.scene_bounds(all_meshes)
     cam = rk.make_camera()
