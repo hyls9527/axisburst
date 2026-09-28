@@ -114,8 +114,30 @@ SVG 才是交付物，用浏览器无头渲染回来看，不要只看 Blender �
 6. 导出 SVG 的 `stroke-width` 跟 `Line Art` 的 `radius`（当前 0.0026）挂钩，出来约 0.15px，偏细；要统一线宽在导出后做规范化，别逐个手改。
 7. **Workbench 渲染引擎不渲染 Grease Pencil**，用 Workbench 预览线稿只会得到空白图。预览用 EEVEE（脚本已默认 EEVEE）。
 
+## 四季山河 · 产物一览
+
+第二个产品：中国四季山水摆件，12 件，560 × 320 × 360 mm。规格见 [SPEC-四季山河.md](./SPEC-四季山河.md)。
+
+一键产出：`npm run build`（分段 `cad` / `mesh` / `sishan-organic` / `sishan-assembly` / `sishan-assets`）。
+只跑四季山河：`node tools/build.mjs --only=sishan-organic,sishan-assembly,sishan-assets`。
+
+| 路径 | 内容 | 怎么来的 |
+|---|---|---|
+| `blender/out/live/SS*.obj` `.blend` | 8 个有机件几何 + 山体 | `blender/live_scripts/sishan_organic.py`（**活动 Blender**，经 `tools/blender-live.py exec-file` 投递） |
+| `cad/out/{base_ss01,pavilion_ss05,temple_ss10}.{stl,step}` | 3 个规整件（底座/亭台/寺庙），真 B-rep | `cad/*.py`（`uv tool run --from build123d python`） |
+| `blender/out/sishan/sishan_lineart.svg` | **总装分层线稿**，12 个零件图层（`layer.SS-01` …） | `blender/build_sishan_assembly.py` |
+| `blender/out/sishan/axisburst_parts.json` | 每件的次序 / 包围盒 / 轴向位置 | 同上 |
+| `blender/out/sishan/views/{front,side,top}_{line,clay,wire,season}.png` | **三视图 × 4 风格 = 12 张** | 同上（出图前把网格减面到 6%，否则线框慢到不可用） |
+| `assets/sishan.svg` | 前端用的规范化分层 SVG（统一线宽、碎点过滤、可 `--tilt` 放斜） | `tools/normalize-svg.mjs` |
+| `assets/sishan-parts.json` | 每件的爆炸位移量 + 视图框 | 同上 |
+| `assets/views/*.png` + `manifest.json` | 页面用的三视图缩略 | `tools/copy-views.mjs` + `tools/plates.mjs` |
+| `index.html` / `main.js` / `styles.css` | 纸面风页面 + anime.js v4 爆炸时序 | 本地 `node tools/serve.mjs` → http://127.0.0.1:5178 |
+
+四季语义色（`build_sishan_assembly.py` 的 `SEASON` 表 / `main.js` 的 `SEASON_COLOR`）：
+春粉 `#e08aa8` / 夏绿青 / 秋红橙 / 冬白墨。线稿图保持单色，色只用在色稿与前端色标。
+
 ## 待办
 
-- [ ] SVG 规范化：统一线宽、合并碎段、去重、压缩（`svgo` 已装进 devDependencies，待写 `tools/normalize-svg.mjs`）
-- [ ] 爆炸状态的图层位移量由 Blender 一并导出（现在 `data-dx/data-dy` 还在前端手写）
-- [ ] 把 `blender/out/axisburst_lineart.svg` 接进前端主轴（当前 `index.html` 是手写 SVG 版）
+- [ ] 线稿仍有零星碎点（减面网格的轮廓短线），考虑在 Blender 侧限制最短线段
+- [ ] SS-11 寒松虽加了枝条，线稿仍偏简单
+- [ ] 四季配色目前只用于色稿与前端色标，未进线稿分区
