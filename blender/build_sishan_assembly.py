@@ -239,6 +239,19 @@ def main():
     os.makedirs(VIEW, exist_ok=True)
     corners = rk.bbox_corners(lo, hi)
 
+    # 视图渲染只为出图，不需要高模：先大幅减面，否则线框修改器会慢到不可用
+    scene = bpy.context.scene
+    scene.render.resolution_x = 1100
+    scene.render.resolution_y = 850
+    for m in all_meshes:
+        d = m.modifiers.new("viewdec", "DECIMATE")
+        d.ratio = 0.06
+        bpy.ops.object.select_all(action="DESELECT")
+        m.select_set(True)
+        bpy.context.view_layer.objects.active = m
+        bpy.ops.object.modifier_apply(modifier=d.name)
+    print("[sishan] 视图用网格已减面 6%")
+
     clay = bpy.data.materials.new("Clay")
     clay.use_nodes = True
     cb = clay.node_tree.nodes.get("Principled BSDF")
@@ -283,6 +296,8 @@ def main():
         bpy.context.scene.render.filepath = os.path.join(VIEW, f"{view_name}_clay.png")
         bpy.ops.render.render(write_still=True)
 
+        # 线框要墨色，否则白线打在浅底上看不见
+        set_material(bpy.data.materials.get("Ink"))
         wireframe(True)
         bpy.context.scene.render.filepath = os.path.join(VIEW, f"{view_name}_wire.png")
         bpy.ops.render.render(write_still=True)
