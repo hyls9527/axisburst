@@ -215,6 +215,15 @@ def ss11_pine():
         for v in res["verts"]:
             v.co.x = v.co.x * 1.0 + 0.03 * (i % 2)
             v.co += Vector((0.02 * i, 0.01 * i, z))
+        # 每层挑出枝：光滑锥面几乎没有转折线，加枝条才有线稿
+        rng = random.Random(700 + i)
+        for k in range(9):
+            a = k / 9 * math.tau + i * 0.35
+            x0, y0 = 0.04 * math.cos(a), 0.04 * math.sin(a)
+            x1 = math.cos(a) * (r * 0.94)
+            y1 = math.sin(a) * (r * 0.94)
+            z1 = z + 0.24 - rng.uniform(0.02, 0.07) - 0.10
+            cyl(bm, (x0, y0, z + 0.06), (x1, y1, z1), 0.016, seg=6)
     return mesh_obj("SS11_hansong", bm)
 
 

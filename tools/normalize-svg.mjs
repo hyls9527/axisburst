@@ -31,7 +31,7 @@ const SRC_META = resolve(ROOT, opt('meta', 'blender/out/sishan/axisburst_parts.j
 const OUT_SVG = resolve(ROOT, opt('out', 'assets/sishan.svg'));
 const OUT_PARTS = resolve(ROOT, opt('out-parts', 'assets/sishan-parts.json'));
 /** 短于「viewBox 宽 × 此比例」的笔画直接丢弃 —— 减面网格会留下大量碎点 */
-const MIN_STROKE_RATIO = 0.0025;
+const MIN_STROKE_RATIO = Number(opt('min-stroke', '0.0038'));
 
 /** 线宽相对 viewBox 宽度取值：看板宽 1000px 时约 2px */
 const STROKE_RATIO = 1 / 420;

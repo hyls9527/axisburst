@@ -179,10 +179,10 @@ def main():
         obj.select_set(True)
         bpy.context.view_layer.objects.active = obj
         d = obj.modifiers.new("d", "DECIMATE")
-        d.ratio = 0.16
+        d.ratio = 0.12
         s = obj.modifiers.new("s", "SMOOTH")
         s.factor = 0.9
-        s.iterations = 8
+        s.iterations = 12
         bpy.ops.object.modifier_apply(modifier=d.name)
         bpy.ops.object.modifier_apply(modifier=s.name)
 
