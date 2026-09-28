@@ -141,6 +141,36 @@ body > p[data-aigc-mark] {
 .readout dt { margin: 0; }
 .readout dd { margin: 0; color: var(--ink); }
 
+/* ---------------------------------------------------------------- 三视图缩略 */
+
+.plates {
+  position: absolute;
+  right: 4vw;
+  bottom: 13vh;
+  display: flex;
+  gap: 10px;
+}
+
+.plates .plate {
+  margin: 0;
+  width: 96px;
+}
+
+.plates .plate img {
+  display: block;
+  width: 100%;
+  border: 1px solid var(--rule);
+  background: var(--paper-deep);
+}
+
+.plates .plate figcaption {
+  margin-top: 4px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+}
+
 /* ---------------------------------------------------------------- 控件 */
 
 .controls {

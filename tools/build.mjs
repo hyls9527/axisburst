@@ -97,11 +97,11 @@ const stages = [
   {
     name: 'sishan-assets',
     what: '四季山河 · 前端资产（分层 SVG + 位移量）',
-    commands: () => [{
-      bin: process.execPath,
-      args: [py('tools/normalize-svg.mjs')],
-      label: 'normalize-svg (sishan)',
-    }],
+    commands: () => [
+      { bin: process.execPath, args: [py('tools/normalize-svg.mjs')], label: 'normalize-svg (sishan)' },
+      { bin: process.execPath, args: [py('tools/copy-views.mjs')], label: 'copy-views' },
+      { bin: process.execPath, args: [py('tools/plates.mjs')], label: 'plates manifest' },
+    ],
   },
   {
     name: 'assembly',

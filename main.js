@@ -112,3 +112,18 @@ speedEl.addEventListener('input', () => {
 });
 
 window.sishan = { tl, parts, meta };
+
+// 三视图 × 风格缩略图（由 tools/copy-views.mjs + plates.mjs 产出）
+const platesEl = document.getElementById('plates');
+try {
+  const plates = await fetch('./assets/views/manifest.json').then((r) => r.json());
+  const byView = {};
+  for (const it of plates.items) (byView[it.view] ??= []).push(it);
+  platesEl.innerHTML = Object.entries(byView).map(([view, items]) => `
+    <figure class="plate">
+      <figcaption>${items[0].viewLabel}</figcaption>
+      <img src="./assets/views/${items.find((i) => i.style === 'line')?.file ?? items[0].file}" alt="${items[0].viewLabel}线稿" />
+    </figure>`).join('');
+} catch {
+  platesEl.hidden = true;
+}
