@@ -4,210 +4,34 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AxisBurst 轴爆 · 机械零件 SVG 爆炸分解时序</title>
+  <title>AxisBurst 轴爆 · 机械零件线稿装配分解</title>
   <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
-<p data-aigc-mark="1" style="margin:0 0 8px;font-size:10px;line-height:1.3;color:#6b6560;font-weight:400;">AI生成</p>
+<p data-aigc-mark="1" style="margin:0;font-size:10px;line-height:1.3;color:#a7a49b;font-weight:400;">AI生成</p>
 
   <div class="app">
-    <header class="header">
-      <div>
-        <p class="eyebrow">ASSEMBLY SEQUENCE · anime.js v4</p>
-        <h1>AxisBurst 轴爆</h1>
-      </div>
-      <div class="controls">
-        <button type="button" id="btn-play" class="btn primary">播放</button>
-        <button type="button" id="btn-restart" class="btn">重播</button>
-        <label class="speed">
-          <span>速度</span>
-          <input type="range" id="speed" min="0.5" max="2" step="0.1" value="1" />
-          <span id="speed-val" class="mono">1.0×</span>
-        </label>
-      </div>
+    <header class="masthead">
+      <h1>The complete<br />assembly toolkit</h1>
+      <p>Blender 出分层线稿 SVG，anime.js v4 排装配时序。<br />一个零件一个图层，一套时间轴拆到底。</p>
     </header>
 
-    <main class="stage">
-      <!--
-        分层 SVG：每个零件独立 <g class="part" data-part="...">
-        引线标注在 <g class="leaders">，与零件同步显隐
-      -->
-      <svg id="assembly" viewBox="0 0 900 640" role="img" aria-label="机械装配体爆炸分解动画">
-        <defs>
-          <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">
-            <path d="M24 0H0V24" fill="none" stroke="#2A3140" stroke-width="0.6"/>
-          </pattern>
-          <linearGradient id="metalA" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stop-color="#5A6B80"/>
-            <stop offset="45%" stop-color="#334052"/>
-            <stop offset="100%" stop-color="#1C2430"/>
-          </linearGradient>
-          <linearGradient id="metalB" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#8A9BB0"/>
-            <stop offset="100%" stop-color="#3A485C"/>
-          </linearGradient>
-          <linearGradient id="metalC" x1="0" y1="1" x2="1" y2="0">
-            <stop offset="0%" stop-color="#2C3646"/>
-            <stop offset="100%" stop-color="#6A7C92"/>
-          </linearGradient>
-          <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-            <path d="M0 0 L10 5 L0 10 z" fill="#5EC8FF"/>
-          </marker>
-        </defs>
+    <div class="drawing" id="drawing" aria-label="机械装配体线稿"></div>
 
-        <rect width="900" height="640" fill="#12151A"/>
-        <rect width="900" height="640" fill="url(#grid)" opacity="0.4"/>
+    <ol class="keywords" id="keywords"></ol>
 
-        <!-- 装配轴 -->
-        <g class="axis" opacity="0.4">
-          <line x1="180" y1="560" x2="720" y2="100" stroke="#6B7785" stroke-width="1.2" stroke-dasharray="8 6"/>
-          <text x="735" y="96" fill="#6B7785" font-size="12" font-family="ui-monospace, Consolas, monospace">ASM-AXIS</text>
-        </g>
+    <div class="readout" id="readout"></div>
 
-        <!-- ========== 零件层（独立分组，从下到上） ========== -->
-
-        <!-- 1 座体外壳 -->
-        <g class="part" data-part="housing" data-dx="-40" data-dy="50">
-          <g class="body">
-            <path d="M220 470 L320 420 L520 420 L620 470 L520 520 L320 520 Z" fill="#252C38" stroke="#C8D0DA" stroke-width="1.4"/>
-            <path d="M250 430 L250 360 L340 315 L500 315 L590 360 L590 430 L500 475 L340 475 Z" fill="url(#metalA)" stroke="#C8D0DA" stroke-width="1.5"/>
-            <ellipse cx="420" cy="375" rx="95" ry="42" fill="#1A1F26" stroke="#C8D0DA" stroke-width="1.2"/>
-            <ellipse cx="420" cy="375" rx="68" ry="30" fill="#12151A" stroke="#6B7785" stroke-width="1"/>
-            <circle cx="290" cy="390" r="10" fill="#12151A" stroke="#C8D0DA" stroke-width="1.1"/>
-            <circle cx="550" cy="390" r="10" fill="#12151A" stroke="#C8D0DA" stroke-width="1.1"/>
-            <circle cx="330" cy="455" r="10" fill="#12151A" stroke="#C8D0DA" stroke-width="1.1"/>
-            <circle cx="510" cy="455" r="10" fill="#12151A" stroke="#C8D0DA" stroke-width="1.1"/>
-            <path d="M340 315 L500 315 L590 360" fill="none" stroke="#8A9BB0" stroke-width="1.6" opacity="0.65"/>
-          </g>
-        </g>
-
-        <!-- 2 下轴承 -->
-        <g class="part" data-part="bearing-lower" data-dx="-12" data-dy="78">
-          <g class="body">
-            <ellipse cx="420" cy="400" rx="100" ry="46" fill="url(#metalB)" stroke="#C8D0DA" stroke-width="1.3"/>
-            <ellipse cx="420" cy="400" rx="74" ry="34" fill="none" stroke="#C8D0DA" stroke-width="1.2"/>
-            <ellipse cx="420" cy="400" rx="44" ry="20" fill="#1A1F26" stroke="#C8D0DA" stroke-width="1.1"/>
-            <g fill="#4A5A70" stroke="#C8D0DA" stroke-width="0.9">
-              <circle cx="350" cy="400" r="6"/><circle cx="490" cy="400" r="6"/>
-              <circle cx="375" cy="382" r="6"/><circle cx="465" cy="382" r="6"/>
-              <circle cx="375" cy="418" r="6"/><circle cx="465" cy="418" r="6"/>
-            </g>
-          </g>
-        </g>
-
-        <!-- 3 主齿轮 -->
-        <g class="part" data-part="gear" data-dx="18" data-dy="-12">
-          <g class="body" id="gear-body">
-            <!-- teeth + hub injected by JS for clean geometry -->
-          </g>
-        </g>
-
-        <!-- 4 上轴承 -->
-        <g class="part" data-part="bearing-upper" data-dx="40" data-dy="-58">
-          <g class="body">
-            <ellipse cx="420" cy="320" rx="90" ry="40" fill="url(#metalB)" stroke="#C8D0DA" stroke-width="1.3"/>
-            <ellipse cx="420" cy="320" rx="66" ry="30" fill="none" stroke="#C8D0DA" stroke-width="1.2"/>
-            <ellipse cx="420" cy="320" rx="38" ry="18" fill="#1A1F26" stroke="#C8D0DA" stroke-width="1.1"/>
-            <g fill="#4A5A70" stroke="#C8D0DA" stroke-width="0.9">
-              <circle cx="360" cy="320" r="5.5"/><circle cx="480" cy="320" r="5.5"/>
-              <circle cx="385" cy="302" r="5.5"/><circle cx="455" cy="302" r="5.5"/>
-              <circle cx="385" cy="338" r="5.5"/><circle cx="455" cy="338" r="5.5"/>
-            </g>
-          </g>
-        </g>
-
-        <!-- 5 传动轴 -->
-        <g class="part" data-part="shaft" data-dx="70" data-dy="-95">
-          <g class="body">
-            <path d="M375 290 L375 140 L398 122 L442 122 L465 140 L465 290 L442 308 L398 308 Z" fill="url(#metalA)" stroke="#C8D0DA" stroke-width="1.4"/>
-            <ellipse cx="420" cy="140" rx="45" ry="16" fill="url(#metalB)" stroke="#C8D0DA" stroke-width="1.2"/>
-            <ellipse cx="420" cy="140" rx="16" ry="6" fill="#1A1F26" stroke="#6B7785" stroke-width="0.9"/>
-            <rect x="408" y="175" width="24" height="55" rx="2" fill="#12151A" stroke="#C8D0DA" stroke-width="1"/>
-            <line x1="385" y1="205" x2="455" y2="205" stroke="#6B7785" stroke-width="0.8" stroke-dasharray="4 3"/>
-          </g>
-        </g>
-
-        <!-- 6 端盖 -->
-        <g class="part" data-part="endcap" data-dx="105" data-dy="-135">
-          <g class="body">
-            <ellipse cx="420" cy="118" rx="62" ry="26" fill="#2A3444" stroke="#C8D0DA" stroke-width="1.2"/>
-            <ellipse cx="420" cy="108" rx="62" ry="26" fill="url(#metalC)" stroke="#C8D0DA" stroke-width="1.3"/>
-            <ellipse cx="420" cy="108" rx="24" ry="11" fill="#1A1F26" stroke="#C8D0DA" stroke-width="1.1"/>
-            <g fill="#12151A" stroke="#C8D0DA" stroke-width="0.9">
-              <circle cx="372" cy="108" r="5"/><circle cx="468" cy="108" r="5"/>
-              <circle cx="420" cy="92" r="5"/><circle cx="420" cy="124" r="5"/>
-            </g>
-          </g>
-        </g>
-
-        <!-- 7 紧固螺栓 -->
-        <g class="part" data-part="bolts" data-dx="-88" data-dy="-28">
-          <g class="body">
-            <g transform="translate(290 385)"><path d="M-11 0 L-6 -10 L6 -10 L11 0 L6 10 L-6 10 Z" fill="url(#metalB)" stroke="#C8D0DA" stroke-width="1.1"/><circle r="4" fill="#12151A" stroke="#C8D0DA"/><path d="M-6 12 H6 L4 32 H-4 Z" fill="#2A3444" stroke="#C8D0DA" stroke-width="0.95"/></g>
-            <g transform="translate(550 385)"><path d="M-11 0 L-6 -10 L6 -10 L11 0 L6 10 L-6 10 Z" fill="url(#metalB)" stroke="#C8D0DA" stroke-width="1.1"/><circle r="4" fill="#12151A" stroke="#C8D0DA"/><path d="M-6 12 H6 L4 32 H-4 Z" fill="#2A3444" stroke="#C8D0DA" stroke-width="0.95"/></g>
-            <g transform="translate(330 455)"><path d="M-11 0 L-6 -10 L6 -10 L11 0 L6 10 L-6 10 Z" fill="url(#metalB)" stroke="#C8D0DA" stroke-width="1.1"/><circle r="4" fill="#12151A" stroke="#C8D0DA"/><path d="M-6 12 H6 L4 32 H-4 Z" fill="#2A3444" stroke="#C8D0DA" stroke-width="0.95"/></g>
-            <g transform="translate(510 455)"><path d="M-11 0 L-6 -10 L6 -10 L11 0 L6 10 L-6 10 Z" fill="url(#metalB)" stroke="#C8D0DA" stroke-width="1.1"/><circle r="4" fill="#12151A" stroke="#C8D0DA"/><path d="M-6 12 H6 L4 32 H-4 Z" fill="#2A3444" stroke="#C8D0DA" stroke-width="0.95"/></g>
-          </g>
-        </g>
-
-        <!-- ========== 引线标注层 ========== -->
-        <g class="leaders" id="leaders">
-          <!-- populated / positioned in markup below; groups get opacity via timeline -->
-          <g class="leader" data-for="endcap">
-            <path class="ldash" d="M525 78 L620 48 L700 48" fill="none" stroke="#5EC8FF" stroke-width="1.1" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
-            <circle cx="525" cy="78" r="4" fill="#FF6B2C"/>
-            <text x="708" y="52" class="lbl">01 端盖</text>
-            <text x="708" y="68" class="code">PN-510</text>
-          </g>
-          <g class="leader" data-for="shaft">
-            <path class="ldash" d="M478 175 L620 130 L700 130" fill="none" stroke="#5EC8FF" stroke-width="1.1" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
-            <circle cx="478" cy="175" r="4" fill="#FF6B2C"/>
-            <text x="708" y="134" class="lbl">02 传动轴</text>
-            <text x="708" y="150" class="code">PN-410</text>
-          </g>
-          <g class="leader" data-for="bearing-upper">
-            <path class="ldash" d="M505 310 L640 230 L700 230" fill="none" stroke="#5EC8FF" stroke-width="1.1" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
-            <circle cx="505" cy="310" r="4" fill="#FF6B2C"/>
-            <text x="708" y="234" class="lbl">03 上轴承</text>
-            <text x="708" y="250" class="code">PN-211</text>
-          </g>
-          <g class="leader" data-for="gear">
-            <path class="ldash" d="M515 365 L650 310 L700 310" fill="none" stroke="#5EC8FF" stroke-width="1.1" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
-            <circle cx="515" cy="365" r="4" fill="#FF6B2C"/>
-            <text x="708" y="314" class="lbl">04 主齿轮</text>
-            <text x="708" y="330" class="code">PN-330</text>
-          </g>
-          <g class="leader" data-for="bearing-lower">
-            <path class="ldash" d="M515 415 L640 390 L700 390" fill="none" stroke="#5EC8FF" stroke-width="1.1" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
-            <circle cx="515" cy="415" r="4" fill="#FF6B2C"/>
-            <text x="708" y="394" class="lbl">05 下轴承</text>
-            <text x="708" y="410" class="code">PN-210</text>
-          </g>
-          <g class="leader" data-for="housing">
-            <path class="ldash" d="M300 470 L160 520 L90 520" fill="none" stroke="#5EC8FF" stroke-width="1.1" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
-            <circle cx="300" cy="470" r="4" fill="#FF6B2C"/>
-            <text x="20" y="540" class="lbl">06 座体外壳</text>
-            <text x="20" y="556" class="code">PN-100</text>
-          </g>
-          <g class="leader" data-for="bolts">
-            <path class="ldash" d="M250 370 L150 300 L90 300" fill="none" stroke="#5EC8FF" stroke-width="1.1" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
-            <circle cx="250" cy="370" r="4" fill="#FF6B2C"/>
-            <text x="20" y="296" class="lbl">07 紧固螺栓</text>
-            <text x="20" y="312" class="code">PN-601 ×4</text>
-          </g>
-        </g>
-      </svg>
-
-      <aside class="legend">
-        <p class="legend-title">零件清单</p>
-        <ol id="part-list"></ol>
-        <p class="hint">时序：装配 → 弹性爆炸展开 → 停留 1s → 收回装配</p>
-      </aside>
-    </main>
-
-    <footer class="footer">
-      <span class="mono" id="phase">装配状态</span>
-      <span class="mono" id="clock">0.00s</span>
+    <footer class="controls">
+      <button type="button" id="btn-play" class="btn primary">暂停</button>
+      <button type="button" id="btn-restart" class="btn">重播</button>
+      <label class="speed">
+        <span>速度</span>
+        <input type="range" id="speed" min="0.5" max="2" step="0.1" value="1" />
+        <span class="mono" id="speed-val">1.0×</span>
+      </label>
+      <span class="mono phase" id="phase"></span>
+      <span class="mono clock" id="clock">0.00s</span>
     </footer>
   </div>
 

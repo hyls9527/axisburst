@@ -5,5 +5,16 @@
   "type": "module",
   "dependencies": {
     "animejs": "^4.2.2"
+  },
+  "devDependencies": {
+    "svgo": "^4.1.0"
+  },
+  "scripts": {
+    "build": "node tools/build.mjs",
+    "build:list": "node tools/build.mjs --list",
+    "build:cad": "node tools/build.mjs --only=cad,mesh",
+    "build:blender": "node tools/build.mjs --only=parts,components",
+    "assets": "node tools/build.mjs --only=assets",
+    "dev": "node tools/serve.mjs"
   }
 }

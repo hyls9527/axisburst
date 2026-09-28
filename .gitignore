@@ -1,0 +1,4 @@
+node_modules/
+
+# Blender 管线产物（由 blender/build_and_export.py 重新生成）
+blender/out/
