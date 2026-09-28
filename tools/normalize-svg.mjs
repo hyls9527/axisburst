@@ -119,19 +119,28 @@ const groups = rawGroups.map(({ id, paths }) => ({
   paths: paths.map((d) => rotatePathData(d, TILT_DEG, pivot.x, pivot.y)),
 }));
 
-// 丢掉碎点：减面后的有机网格会留下大量极短笔画，画出来是一片噪点
-const minStroke = (rawBounds.maxX - rawBounds.minX) * MIN_STROKE_RATIO;
+// 丢掉碎点：减面后的有机网格会留下大量极短笔画，画出来是一片噪点。
+// 阈值必须按「每个零件自己的尺寸」算 —— 用全局值会把小件的线全滤掉（实测 12 层掉到 9 层）。
+const globalMin = (rawBounds.maxX - rawBounds.minX) * MIN_STROKE_RATIO;
 let droppedStrokes = 0;
 const keptGroups = groups.map(({ id, paths }) => {
+  const b = bboxOfPaths(paths);
+  const diag = Math.hypot(b.maxX - b.minX, b.maxY - b.minY);
+  const minStroke = Math.min(globalMin, diag * 0.05);
   const kept = paths.filter((d) => {
-    const b = bboxOfPaths([d]);
-    const len = Math.hypot(b.maxX - b.minX, b.maxY - b.minY);
+    const s = bboxOfPaths([d]);
+    const len = Math.hypot(s.maxX - s.minX, s.maxY - s.minY);
     if (len < minStroke) {
       droppedStrokes += 1;
       return false;
     }
     return true;
   });
+  // 兜底：滤完一条不剩说明阈值对这个零件不合适，宁可留着也不要整件消失
+  if (!kept.length && paths.length) {
+    droppedStrokes -= 0;
+    return { id, paths };
+  }
   return { id, paths: kept };
 });
 
