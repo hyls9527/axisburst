@@ -8,6 +8,8 @@ import os
 import sys
 
 import bpy
+from mathutils import Vector
+from mathutils.bvhtree import BVHTree
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 if HERE not in sys.path:
@@ -63,16 +65,10 @@ def main():
     os.makedirs(out_dir, exist_ok=True)
     rk.reset_scene()
 
-    gp_objects = []
-    placed = {}
-    missing = []
-
-    for pn, label, objname, loc, crease in LAYOUT:
+    def import_part(pn, objname, loc):
         path = obj_path(objname)
         if not path:
-            missing.append(objname)
-            continue
-
+            return None
         before = set(bpy.data.objects)
         if path.lower().endswith(".obj"):
             bpy.ops.wm.obj_import(filepath=path)
@@ -80,8 +76,7 @@ def main():
             bpy.ops.wm.stl_import(filepath=path)
         new = [o for o in bpy.data.objects if o not in before and o.type == "MESH"]
         if not new:
-            missing.append(objname)
-            continue
+            return None
         bpy.ops.object.select_all(action="DESELECT")
         for o in new:
             o.select_set(True)
@@ -91,10 +86,66 @@ def main():
         obj = bpy.context.object
         obj.name = pn
         obj.location = loc
-
         col = kit.new_collection("P_" + pn)
         kit.move_to(obj, col)
+        # 把变换烘进网格，后面射线求交才在同一个坐标系里
+        bpy.ops.object.select_all(action="DESELECT")
+        obj.select_set(True)
+        bpy.context.view_layer.objects.active = obj
+        bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+        return obj
+
+    gp_objects = []
+    placed = {}
+    missing = []
+    by_pn = {pn: (objname, loc, crease) for pn, _l, objname, loc, crease in LAYOUT}
+
+    # ① 先放底座与山体 —— 其余件要坐在山体表面，所以这两件必须先到位
+    for pn in ("SS-01", "SS-08"):
+        objname, loc, _c = by_pn[pn]
+        obj = import_part(pn, objname, loc)
+        if obj is None:
+            missing.append(objname)
+        else:
+            placed[pn] = obj
+
+    # ② 用山体的 BVH 求每件所在 (x,y) 的山面高度
+    mountain = placed.get("SS-08")
+    bvh = None
+    if mountain is not None:
+        depsgraph = bpy.context.evaluated_depsgraph_get()
+        bvh = BVHTree.FromObject(mountain, depsgraph)
+        mlo, mhi = rk.scene_bounds([mountain])
+        print(f"[sishan] 山体采样范围 z {mlo.z:.2f}~{mhi.z:.2f}")
+
+    def surface_z(x, y, fallback):
+        if bvh is None:
+            return fallback
+        origin = Vector((x, y, 20.0))
+        hit = bvh.ray_cast(origin, Vector((0.0, 0.0, -1.0)), 40.0)
+        if hit and hit[0] is not None:
+            return hit[0].z
+        return None
+
+    # ③ 其余件按山面高度落位；离山的件（荷塘/流水）保留手工 z
+    for pn, label, objname, loc, crease in LAYOUT:
+        if pn in placed:
+            continue
+        x, y, z_manual = loc
+        z = surface_z(x, y, z_manual)
+        embed = 0.05
+        if z is None:
+            z = z_manual
+            note = "手工"
+        else:
+            z = z + embed
+            note = f"贴山面 {z - embed:.2f}"
+        obj = import_part(pn, objname, (x, y, z))
+        if obj is None:
+            missing.append(objname)
+            continue
         placed[pn] = obj
+        print(f"[sishan] {pn} {label} 落位 z={z:.2f} ({note})")
 
     bpy.context.view_layer.update()
     all_meshes = list(placed.values())
