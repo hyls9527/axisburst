@@ -19,15 +19,25 @@ import { fileURLToPath } from 'node:url';
 import { optimize } from 'svgo';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const SRC_SVG = resolve(ROOT, 'blender/out/axisburst_lineart.svg');
-const SRC_META = resolve(ROOT, 'blender/out/axisburst_parts.json');
-const OUT_SVG = resolve(ROOT, 'assets/axisburst.svg');
-const OUT_PARTS = resolve(ROOT, 'assets/parts.json');
+
+// 默认处理四季山河；换产品用 --svg/--meta/--out/--out-parts 覆盖
+const argv = process.argv.slice(2);
+const opt = (name, fallback) => {
+  const hit = argv.find((a) => a.startsWith(`--${name}=`));
+  return hit ? hit.split('=').slice(1).join('=') : fallback;
+};
+const SRC_SVG = resolve(ROOT, opt('svg', 'blender/out/sishan/sishan_lineart.svg'));
+const SRC_META = resolve(ROOT, opt('meta', 'blender/out/sishan/axisburst_parts.json'));
+const OUT_SVG = resolve(ROOT, opt('out', 'assets/sishan.svg'));
+const OUT_PARTS = resolve(ROOT, opt('out-parts', 'assets/sishan-parts.json'));
+/** 短于「viewBox 宽 × 此比例」的笔画直接丢弃 —— 减面网格会留下大量碎点 */
+const MIN_STROKE_RATIO = 0.0025;
 
 /** 线宽相对 viewBox 宽度取值：看板宽 1000px 时约 2px */
 const STROKE_RATIO = 1 / 420;
 /** 画面倾斜：把装配轴在画布里放斜，对齐参考图的斜向构图（Blender 侧不滚转） */
-const TILT_DEG = 148;
+// 画面倾斜：机械件(AxisBurst)要放斜，山水件本身正立 —— 按产品传参，默认不转
+const TILT_DEG = Number(opt('tilt', '0'));
 /** 爆炸倍率：1 = 零件只散开到真实轴向间距，>1 更夸张 */
 const SPREAD = 1.5;
 /** 个别零件的手工修正（世界轴向 t 偏移 / 垂直轴线的额外位移，单位是 viewBox 单位） */
@@ -109,13 +119,30 @@ const groups = rawGroups.map(({ id, paths }) => ({
   paths: paths.map((d) => rotatePathData(d, TILT_DEG, pivot.x, pivot.y)),
 }));
 
+// 丢掉碎点：减面后的有机网格会留下大量极短笔画，画出来是一片噪点
+const minStroke = (rawBounds.maxX - rawBounds.minX) * MIN_STROKE_RATIO;
+let droppedStrokes = 0;
+const keptGroups = groups.map(({ id, paths }) => {
+  const kept = paths.filter((d) => {
+    const b = bboxOfPaths([d]);
+    const len = Math.hypot(b.maxX - b.minX, b.maxY - b.minY);
+    if (len < minStroke) {
+      droppedStrokes += 1;
+      return false;
+    }
+    return true;
+  });
+  return { id, paths: kept };
+});
+
 // 补齐 bbox，并按 Blender 给的装配次序排序
-const parts = groups
+const parts = keptGroups
   .map(({ id, paths }) => {
     const info = meta.parts[id];
     if (!info) throw new Error(`SVG 里的图层 ${id} 在 axisburst_parts.json 里没有对应零件`);
     return { id, paths, ...bboxOfPaths(paths), order: info.order, label: info.label, t: info.axis_t };
   })
+  .filter((p) => p.paths.length > 0)
   .sort((a, b) => a.order - b.order);
 
 // 装配轴：用轴向 t 最小 / 最大的两个零件中心连线，得出 SVG 空间里的轴方向
@@ -225,7 +252,7 @@ writeFileSync(
   'utf8'
 );
 
-console.log(`[normalize] ${groups.length} 个零件图层`);
+console.log(`[normalize] ${parts.length} 个零件图层（丢弃碎点 ${droppedStrokes} 条）`);
 console.log(`[normalize] viewBox ${round(vbW)}×${round(vbH)}  stroke-width ${strokeWidth}`);
 console.log(`[normalize] axis (${round(axis.x, 3)}, ${round(axis.y, 3)})  ${round(unitsPerWorld, 2)} svg单位/世界单位`);
 for (const p of outParts) {
