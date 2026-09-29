@@ -1,21 +1,14 @@
-"""零件注册表。
+"""零件注册表（脚手架，当前为空）。
 
 新增零件：在 parts/ 下加一个模块，导出 ID / LABEL / ORDER / Z / build(col)，
 再把模块名加进 PART_MODULES。没写完的模块会被自动跳过，方便一个一个来。
+
+产品实例已下架，这里只剩脚手架：要开始新零件时把模块名登记进来即可。
 """
 
 from importlib import import_module
 
-PART_MODULES = [
-    "housing",
-    "flange_lower",
-    "bolts",
-    "bearing_lower",
-    "gear",
-    "bearing_upper",
-    "shaft",
-    "cap",
-]
+PART_MODULES: list[str] = []
 
 
 def load_parts():

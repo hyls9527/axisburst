@@ -1,58 +1,56 @@
-# AxisBurst（轴爆）
+# AxisBurst · 线稿工作台
 
-机械零件 SVG 爆炸分解时序动画，基于 **anime.js v4**。
+机械零件**分层线稿 SVG**爆炸分解动画的可复用工作台：技能 + Blender 管线 + 工具链。
 
-## 看什么
+两个产品实例（轴爆装配体 / 四季山河摆件）已清空，仓库只剩机器。
+删掉的内容都在 tag `pre-cleanup-20260929` 里：`git checkout pre-cleanup-20260929 -- <路径>` 可取回。
 
-- 等轴测线稿装配体（座体 / 轴承 / 齿轮 / 轴 / 端盖 / 螺栓）
-- 按装配约束顺序依次飞出的时序爆炸
-- 引出线 + 零件编号随停顿点亮
-- 可播放 / 暂停 / 反向装配 / 拖动进度 / 调速
+## 里面有什么
 
-## 运行
+```
+.agents/skills/      技能真源（.claude/skills、.workbuddy/skills 是指向它的 junction）
+AGENTS.md            工作台说明：技能表 / MCP / 管线 / 踩过的坑
+blender/             headless 管线：零件 → 部件 → 总装 → 分层线稿 SVG
+  render_kit.py       场景 / 相机 / Line Art / SVG 导出（公共层）
+  partkit.py          建模积木（bmesh 加减）
+  builder.py          装配落位（Z 轴 = 装配轴）
+  manifest.py         零件 / 部件 / 总装 三级清单
+  from_cad.py         CAD 网格 → 线稿管线
+  parts/ components/  零件 / 部件注册表（当前为空）
+  probe_*.py          能力实测脚本（headless 下什么能跑、什么会崩）
+  CONTROL.md          headless 造型能力的实测边界与开源选型
+tools/               工具链：构建编排 / SVG 规范化 / 无头预览 / 静态服务 / 活动 Blender 通道
+```
 
-### 方式 A · 零构建（当前默认）
-
-`index.html` 通过 import map 从 jsDelivr 加载 anime.js v4（需联网）。在 MiMo Desktop 预览，或任意静态服务器打开根目录。
-
-`vendor/anime.js` 预留为离线本地副本入口；npm 安装后可把 import map 指回 `./vendor/anime.js` 或 `node_modules/animejs`。
-
-### 方式 B · Vite（本地依赖）
+## 跑
 
 ```bash
-npm install
-npm run dev
+npm run build                 # 全管线
+node tools/build.mjs --list   # 看有哪些段
+npm run dev                   # 静态服务器 http://127.0.0.1:5178
 ```
 
-## 结构
-
-```
-mech-explode/
-  index.html      # 舞台与控件
-  styles.css      # 工程图纸风视觉
-  main.js         # 零件 SVG + anime.js 时序
-  vendor/anime.js # anime.js v4 本地副本
-  DESIGN.md       # 设计规范
-  package.json
+```bash
+node tools/normalize-svg.mjs               # 总装线稿 → 前端用的分层 SVG
+node tools/preview-svg.mjs <svg> <png>     # 无头浏览器渲染 SVG，人工核对
 ```
 
-## 时序参数
+## 依赖
 
-| 项 | 值 |
-|---|---|
-| 总时长 | 4.0s |
-| 起始静置 | 280ms |
-| 零件间隔 | 380ms |
-| 单件位移 | 720ms · `out(3)` |
-| 零件数 | 7（含 4 螺栓组） |
+| 依赖 | 版本 | 用途 |
+|---|---|---|
+| `animejs` | ^4.2.2 | 前端时序动画 |
+| `svgo` | ^4.1.0 | 导出 SVG 的规范化 / 压缩 / 统一线宽 |
+| Blender | 5.2.2 LTS | headless 建模与线稿（路径见 AGENTS.md） |
+| `uv` | — | `uv tool run --from build123d python` 跑 code-CAD |
 
-## API 用法（anime.js v4）
+## anime.js v4 速记
 
 ```js
-import { createTimeline, animate, utils } from './vendor/anime.js';
+import { createTimeline } from './vendor/anime.js';
 
 const tl = createTimeline({ autoplay: false, defaults: { ease: 'out(3)' } });
-tl.add('.part[data-id="shaft"]', { x: 52 * 2.8, y: -70 * 2.8 }, 280);
+tl.add('.part[data-id="shaft"]', { x: 145, y: -196 }, 280);
 ```
 
-与 v3 不同：入口为 `createTimeline()`，链式 `.add(target, params, position)`。
+v4 的入口是 `createTimeline()`，链式 `.add(target, params, position)`；v3 的 `anime.timeline()` 不再用。

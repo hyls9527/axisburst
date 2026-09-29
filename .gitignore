@@ -1,10 +1,13 @@
 node_modules/
 
-# Blender 管线产物（由 blender/build_and_export.py 重新生成）
+# Blender 管线产物（由 blender/build_*.py 重新生成）
 blender/out/
 
-# CAD 管线产物（由 cad/*.py 重新生成）
+# CAD 管线产物（由 cad/*.py 重新生成；cad/ 当前已清空）
 cad/out/
+
+# Python 字节码
+__pycache__/
 
 # 预览脚本的临时包裹页
 *.preview.wrap.html

@@ -3,7 +3,7 @@
 一次只建一个零件，单独出线稿 SVG + 预览图，确认形状对了再进总装。
 
 用法：
-  blender.exe --background --factory-startup --python blender/build_part.py -- --part housing
+  blender.exe --background --factory-startup --python blender/build_part.py -- --part <零件id>
   blender.exe --background --factory-startup --python blender/build_part.py -- --all
 
 产物：

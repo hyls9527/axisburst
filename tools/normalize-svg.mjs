@@ -20,30 +20,29 @@ import { optimize } from 'svgo';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
-// 默认处理四季山河；换产品用 --svg/--meta/--out/--out-parts 覆盖
+// 默认对齐 blender/build_assembly.py 的总装产物；换产品用 --svg/--meta/--out/--out-parts 覆盖
 const argv = process.argv.slice(2);
 const opt = (name, fallback) => {
   const hit = argv.find((a) => a.startsWith(`--${name}=`));
   return hit ? hit.split('=').slice(1).join('=') : fallback;
 };
-const SRC_SVG = resolve(ROOT, opt('svg', 'blender/out/sishan/sishan_lineart.svg'));
-const SRC_META = resolve(ROOT, opt('meta', 'blender/out/sishan/axisburst_parts.json'));
-const OUT_SVG = resolve(ROOT, opt('out', 'assets/sishan.svg'));
-const OUT_PARTS = resolve(ROOT, opt('out-parts', 'assets/sishan-parts.json'));
+const SRC_SVG = resolve(ROOT, opt('svg', 'blender/out/axisburst_lineart.svg'));
+const SRC_META = resolve(ROOT, opt('meta', 'blender/out/axisburst_parts.json'));
+const OUT_SVG = resolve(ROOT, opt('out', 'assets/axisburst.svg'));
+const OUT_PARTS = resolve(ROOT, opt('out-parts', 'assets/parts.json'));
 /** 短于「viewBox 宽 × 此比例」的笔画直接丢弃 —— 减面网格会留下大量碎点 */
 const MIN_STROKE_RATIO = Number(opt('min-stroke', '0.0038'));
 
 /** 线宽相对 viewBox 宽度取值：看板宽 1000px 时约 2px */
 const STROKE_RATIO = 1 / 420;
 /** 画面倾斜：把装配轴在画布里放斜，对齐参考图的斜向构图（Blender 侧不滚转） */
-// 画面倾斜：机械件(AxisBurst)要放斜，山水件本身正立 —— 按产品传参，默认不转
+// 画面倾斜：要斜向构图的产品传 --tilt=<度>，正立的产品保持默认 0
 const TILT_DEG = Number(opt('tilt', '0'));
 /** 爆炸倍率：1 = 零件只散开到真实轴向间距，>1 更夸张 */
 const SPREAD = 1.5;
-/** 个别零件的手工修正（世界轴向 t 偏移 / 垂直轴线的额外位移，单位是 viewBox 单位） */
-const PART_TWEAKS = {
-  bolts: { tBias: 0.42, perp: 16 },
-};
+/** 个别零件的手工修正（世界轴向 t 偏移 / 垂直轴线的额外位移，单位是 viewBox 单位）。
+ *  产品实例已下架，这里清空；需要时按 <零件id>: { tBias, perp } 登记。 */
+const PART_TWEAKS = {};
 
 // ---------------------------------------------------------------- 解析
 

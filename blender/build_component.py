@@ -1,7 +1,7 @@
 """AxisBurst · 部件验证器 —— 零件先组成部件，部件先自己验证。
 
 用法：
-  blender --background --factory-startup --python blender/build_component.py -- --component housing-unit
+  blender --background --factory-startup --python blender/build_component.py -- --component <部件id>
   blender --background --factory-startup --python blender/build_component.py -- --all
 
 产物：

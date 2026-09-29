@@ -1,7 +1,12 @@
 # AxisBurst · Agent 工作台
 
-机械零件**分层线稿 SVG**爆炸分解动画（anime.js v4）。
+机械零件**分层线稿 SVG**爆炸分解（anime.js v4 时序）的**可复用工作台**。
 目标视觉：工程爆炸图 / 模型说明书线稿 —— 对齐 animejs.com v4 首屏那类「细线稿 + 等宽标注 + 装配时序」。
+
+> **当前状态：空工作台。** 两个产品实例（轴爆装配体 / 四季山河摆件）已清空，
+> 仓库只留**技能 + 线稿管线 + 工具链 + 文档**。
+> 删掉的内容都在 tag `pre-cleanup-20260929` 里：`git checkout pre-cleanup-20260929 -- <路径>` 可取回。
+> 起新产品的入口见下面「管线」一节末尾。
 
 ## 项目级技能（所有 agent 通用）
 
@@ -22,6 +27,7 @@
 | `animejs-skills` | anime.js **v4** 专项：timeline / stagger / spring / SVG 线稿动画 | [BowTiedSwan/animejs-skills](https://github.com/BowTiedSwan/animejs-skills) | 48 |
 | `taste-skill` | 前端设计口味（反模板化 UI），`name: design-taste-frontend` | [Leonxlnx/taste-skill](https://github.com/Leonxlnx/taste-skill) | 90.9k |
 | `image-to-code` | 参考图 → 代码：先自生成设计图再深读实现 | 同上仓库 | 90.9k |
+| `open-websearch` | 联网搜索 / 抓页面（引擎选型、配置） | 项目内后补安装 | — |
 | `self-learning` | 把调试出来的「可行路径」沉淀成可复用技能 | [Kulaxyz/self-learning-skills](https://github.com/Kulaxyz/self-learning-skills) | 960 |
 | `cad-skill` | 参数化建模（CadQuery），`name: parametric-3d-printing` | [flowful-ai/cad-skill](https://github.com/flowful-ai/cad-skill) | 625 |
 | `blender-modeler` | Blender 建模总纲 | [arjun988/blender-skills](https://github.com/arjun988/blender-skills) | 237 |
@@ -61,7 +67,7 @@ Claude Code 会直接读项目根的 `.mcp.json`，无需额外操作。
 
 **每次使用的三步**：打开 Blender → `Edit → Preferences → Add-ons` 启用 `Interface: MCP for Blender` → 3D 视图按 `N`，在 **MCP for Blender** 标签页点 **Start MCP Server**。
 
-> 同一时间只跑一个 MCP server 实例。没启动 Blender 的 server 时，本项目的 agent 仍可走 headless 脚本（`blender/build_and_export.py`）——两条路并存。
+> 同一时间只跑一个 MCP server 实例。没启动 Blender 的 server 时，本项目的 agent 仍可走 headless 脚本（`blender/build_*.py`）——两条路并存。
 
 ## 工具依赖
 
@@ -80,18 +86,32 @@ Claude Code 会直接读项目根的 `.mcp.json`，无需额外操作。
 
 ## 管线：Blender → 分层线稿 SVG
 
+分层结构：**零件 → 部件 → 总装**，一层一个脚本，都能单独跑。
+
 ```powershell
-& "D:\SteamLibrary\steamapps\common\Blender\blender.exe" --background --factory-startup `
-  --python "blender\build_and_export.py" -- --out "blender\out"
+$bl = "D:\SteamLibrary\steamapps\common\Blender\blender.exe"
+
+# 零件级：单件线稿 + 尺寸/参数记账
+& $bl --background --factory-startup --python "blender\build_part.py"      -- --all --out "blender\out"
+# 部件级：零件先组成部件并验证
+& $bl --background --factory-startup --python "blender\build_component.py" -- --all --out "blender\out"
+# 总装级：部件组成整体 → 总装分层线稿
+& $bl --background --factory-startup --python "blender\build_assembly.py"  -- --out "blender\out"
 ```
+
+一条命令跑全部（每段可单独重跑）：`npm run build`，`node tools/build.mjs --list` 看段落。
 
 产物：
 
-- `blender/out/axisburst_lineart.svg` —— 分层线稿。**零件 = SVG 图层组**（`layer.housing` / `layer.gear` …），当前 8 零件 255 path，纯 stroke 无 fill。
-- `blender/out/preview.png` —— EEVEE 渲染预览（纸白实体），仅用于看造型；**线稿要看 SVG 渲染图**。
+- `blender/out/axisburst_lineart.svg` —— 分层线稿。**零件 = SVG 图层组**（`layer.<零件id>`），纯 stroke 无 fill。
+- `blender/out/axisburst_parts.json` / `assembly_manifest.json` —— 次序 / 包围盒 / 轴向位置 / 设计参数。
+- `blender/out/preview.png` —— EEVEE 渲染预览，仅用于看造型；**线稿要看 SVG 渲染图**。
+- `assets/axisburst.svg` + `assets/parts.json` —— 前端用的规范化分层 SVG 与爆炸位移量（`tools/normalize-svg.mjs`）。
 
-装配顺序（也是 SVG 图层顺序）：
-`housing → flange-lower → bolts → bearing-lower → gear → bearing-upper → shaft → cap`
+装配顺序（也是 SVG 图层顺序）由各零件模块的 `ORDER` 决定。
+
+> **起新产品**：`blender/parts/` 与 `blender/components/` 目前只有空注册表——管线能跑，但没有可建对象。
+> 加零件＝在 `blender/parts/` 放一个模块，导出 `ID / LABEL / ORDER / Z / build(col)`，再把模块名登记进 `PART_MODULES`。
 
 ### 验证线稿（务必做）
 
@@ -114,30 +134,8 @@ SVG 才是交付物，用浏览器无头渲染回来看，不要只看 Blender �
 6. 导出 SVG 的 `stroke-width` 跟 `Line Art` 的 `radius`（当前 0.0026）挂钩，出来约 0.15px，偏细；要统一线宽在导出后做规范化，别逐个手改。
 7. **Workbench 渲染引擎不渲染 Grease Pencil**，用 Workbench 预览线稿只会得到空白图。预览用 EEVEE（脚本已默认 EEVEE）。
 
-## 四季山河 · 产物一览
-
-第二个产品：中国四季山水摆件，12 件，560 × 320 × 360 mm。规格见 [SPEC-四季山河.md](./SPEC-四季山河.md)。
-
-一键产出：`npm run build`（分段 `cad` / `mesh` / `sishan-organic` / `sishan-assembly` / `sishan-assets`）。
-只跑四季山河：`node tools/build.mjs --only=sishan-organic,sishan-assembly,sishan-assets`。
-
-| 路径 | 内容 | 怎么来的 |
-|---|---|---|
-| `blender/out/live/SS*.obj` `.blend` | 8 个有机件几何 + 山体 | `blender/live_scripts/sishan_organic.py`（**活动 Blender**，经 `tools/blender-live.py exec-file` 投递） |
-| `cad/out/{base_ss01,pavilion_ss05,temple_ss10}.{stl,step}` | 3 个规整件（底座/亭台/寺庙），真 B-rep | `cad/*.py`（`uv tool run --from build123d python`） |
-| `blender/out/sishan/sishan_lineart.svg` | **总装分层线稿**，12 个零件图层（`layer.SS-01` …） | `blender/build_sishan_assembly.py` |
-| `blender/out/sishan/axisburst_parts.json` | 每件的次序 / 包围盒 / 轴向位置 | 同上 |
-| `blender/out/sishan/views/{front,side,top}_{line,clay,wire,season}.png` | **三视图 × 4 风格 = 12 张** | 同上（出图前把网格减面到 6%，否则线框慢到不可用） |
-| `assets/sishan.svg` | 前端用的规范化分层 SVG（统一线宽、碎点过滤、可 `--tilt` 放斜） | `tools/normalize-svg.mjs` |
-| `assets/sishan-parts.json` | 每件的爆炸位移量 + 视图框 | 同上 |
-| `assets/views/*.png` + `manifest.json` | 页面用的三视图缩略 | `tools/copy-views.mjs` + `tools/plates.mjs` |
-| `index.html` / `main.js` / `styles.css` | 纸面风页面 + anime.js v4 爆炸时序 | 本地 `node tools/serve.mjs` → http://127.0.0.1:5178 |
-
-四季语义色（`build_sishan_assembly.py` 的 `SEASON` 表 / `main.js` 的 `SEASON_COLOR`）：
-春粉 `#e08aa8` / 夏绿青 / 秋红橙 / 冬白墨。线稿图保持单色，色只用在色稿与前端色标。
-
 ## 待办
 
-- [ ] 线稿仍有零星碎点（减面网格的轮廓短线），考虑在 Blender 侧限制最短线段
-- [ ] SS-11 寒松虽加了枝条，线稿仍偏简单
-- [ ] 四季配色目前只用于色稿与前端色标，未进线稿分区
+无。上一轮的三条待办（碎点收敛 / 寒松造型 / 四季配色入线稿）只对已下架的产品实例成立；
+其中的碎点修复思路（导出前用 bmesh `remove_doubles` + `dissolve_degenerate` 清网格）留在 `git stash` 里，
+`git stash show -p` 可看。

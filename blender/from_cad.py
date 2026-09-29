@@ -1,7 +1,7 @@
 """把 CAD 导出的网格接进现有线稿管线。
 
 用法：blender --background --factory-startup --python blender/from_cad.py -- \
-        --mesh cad/out/housing_cad.stl --name housing --out blender/out/cad
+        --mesh cad/out/<件名>.stl --name <零件id> --out blender/out/cad
 """
 
 from __future__ import annotations
